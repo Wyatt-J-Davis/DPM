@@ -8,7 +8,7 @@ DPM4 (Disk Polymer Mixture V4) is a Monte Carlo simulation developed by Wyatt Da
 2. Compile and run code from osp_project/ directory using a bash script 
 3. Specify run parameters using GUI  
 4. Simulation will create directory within osp_project/data/ with a name that cooresponds to run parameters and write raw gyration tensor eigenvalue data for five independant runs within directory
-5. How you analyze the raw data is up to the user. I would reccomend writing a custom python script for data analysis to extract polymer geometric properties of interest. 
+5. It is up to the user to analyze raw geometric data in meaningful way. I recommend writing a custom data analysis script in python. 
 
 ## Requirements
 - Java JDK 1.8 (http://www.oracle.com/technetwork/java/javase/downloads/index.html)
