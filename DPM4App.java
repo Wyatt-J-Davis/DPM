@@ -16,8 +16,8 @@ import java.util.Calendar;
 /**
  * HardDisksApp does a Monte Carlo simulation for a 2D system of uncharged hard disks crowding an ellipsoidal polymer
  *
- * @author Alan Denton & Wyatt Davis based on MD code ch08/hd/HardDisksApp.java by Jan Tobochnik, Wolfgang Christian, Harvey Gould
- * @version 1.0 revised 12/28/17
+ * @author Wyatt Davis & Alan Denton based on MD code ch08/hd/HardDisksApp.java by Jan Tobochnik, Wolfgang Christian, Harvey Gould
+ * @version 4.0 revised 2/5/18
  * Init.s a second species of disk randomly amongst the first species of disk. Avoids interspecific overlap. Updates positions of both species,  species two behaves ideally in isolation. 
  * 
  */ 
