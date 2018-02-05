@@ -9,11 +9,10 @@ import java.util.stream.*;
 import java.util.Arrays;
 
 /**
- * HardDisksApp does a Monte Carlo simulation for a 2D system of hard disks 
+ * Does a Monte Carlo simulation for a 2D system of hard disks and polymer
  *
  *@author Alan Denton & Wyatt Davis based on MD code ch08/hd/HardDisksApp.java by Jan Tobochnik, Wolfgang Christian, Harvey Gould
- *@version 1.1 revised 04/10/17
- * Started as copy of Rotate_2 
+ *@version 4.0 revised 02/5/18 
  */
  
  
@@ -106,8 +105,8 @@ public class DPM4 implements Drawable {
       } while(overlap);
     }
   }
-// How do I change this to initialize the second species? 
-// Try using random positions for second species
+
+	
   public void setRegularPositions() {
     double dnx = Math.sqrt(Nd);
     int nx = (int) dnx;
@@ -161,8 +160,7 @@ public class DPM4 implements Drawable {
   }
   // end break
   
-  // Incorperate ordered eigenvalues here
-  //For ideal polymer
+  // Incorperate ordered eigenvalues here for ideal polymer
   public void sciutto(int p, double dl1, double dl2){
 	  double L1O = 0; double L2O = 0;
 	  double L1N = 0; double L2N = 0;
@@ -172,7 +170,6 @@ public class DPM4 implements Drawable {
 		  L2O = l2[p]; L2N = L2O + dl2;
 		  
 	  }
-	  
 	  else if(l1[p]<l2[p]){
 		  L1O = l2[p]; L1N = L1O + dl2;
 		  L2O = l1[p]; L2N = L2O + dl1;
@@ -189,12 +186,6 @@ public class DPM4 implements Drawable {
       }   
   
   // Determines whether a crowder and polymer are overlapping
-  
-  ///////// PROBLEM  ////////
-  
-  /**
-   * Need to add trial fluctuations to 'step' and take them into account in 'Overcond'.
-   */
   public void Overcond(int d, int p){
 	  // Step 1: Coordinate Transform
 	  tworoots = true;
@@ -204,31 +195,13 @@ public class DPM4 implements Drawable {
 	  double Tx = Math.cos(theta[p])*Txa-Math.sin(theta[p])*Tya;
 	  double Ty = Math.sin(theta[p])*Txa+Math.cos(theta[p])*Tya;
 	  
-	  
-	  	  //step2=vis.vector(math.cos(theta[j])*step1.x+math.sin(theta[j])
-	  //*step1.y,-math.sin(theta[j])*step1.x+math.cos(theta[j])*step1.y,0)
-	  
-	  // T_x = Math.cos(Theta[p])*Tx+Math.sin(Theta[p])*Ty;
-	  // T_y = -Math.sin(Theta[p])*Tx + Math.cos(Theta[p])*Ty;
-	  
-	  
 	  // Step 2: Calcualte Coefficients of Polynomial
-	  
 	  double A = Tx*Tx/a[p]/a[p];
 	  double B = b[p]*b[p]*Ty*Ty/a[p]/a[p]/a[p]/a[p];
 	  double C = (b[p]*b[p]/a[p]/a[p]) - 1;
 	  
-	  // Step 3: Find Roots of Polynomial
-	  // - Use function 'polynomial' located in numerics/root
-	  
-	  //double coef[] = [C,B,A,D];
-	  double coef[] = new double[5];
-	  //coef[0] = C;
-	  //coef[1] = B;
-	  //coef[2] = A;
-	  //coef[3] = 1;
-	  //
-	  
+	  // Step 3: Find Roots of Polynomial  
+	  double coef[] = new double[5]; 
 	  coef[0] = A*C*C;
 	  coef[1] = 2*A*C;
 	  coef[2] = A+B-(C*C);
@@ -239,7 +212,7 @@ public class DPM4 implements Drawable {
 	  double realroot1 = 0; 
 	  double realroot2 = 0;
 	  
-// start of Alan's edits
+	// start of Alan's edits
 	  double realroots[] = new double[4];
           int nReal = 0;
           for(int i = 0; i < 4; i++){
@@ -266,22 +239,10 @@ public class DPM4 implements Drawable {
 		condition = true;
 	     }
           } 
-// end of Alan's edits
+	// end of Alan's edits
 }
 
-// Trial Fluctuations:
-/** 
- * How to?
- * use new function inside of overcond
- * Take trial fluctuations of each axes as input
- * 
- * Plan: 
- * Make trial fluctuations in eigenvalues. 
- * Pass trial fluctuations to function that determines the probability of fluctuation. 
- * Produce random number (0-1) in 'step' to determine whether the trial fluctuation is accepted.
- * Make sure this happens before overlap condition is checked.  
- */ 
-	  
+
 	  
 	  
   // PROBLEMS //
@@ -323,17 +284,17 @@ public class DPM4 implements Drawable {
           }
         }
       }
-      //System.out.print(condition);
+     
       condition = false;
       tworoots = true;
       for(int k = 0; k<Np; k++){
-		  // condition==false
+		  
 		 if(overlap != true && tworoots!=false){
 			 L = a[k];
 			  if(b[k]>=a[k]){
 				L = b[k];
 			}
-			//Fix
+			
 			if(over[k][i]==1){
 				Overcond(i,k);
 				if(tworoots==true && condition==false){
@@ -342,35 +303,17 @@ public class DPM4 implements Drawable {
 			}
 			    double Txa = PBC.separation(x[i]-xp[k],Lx);
 				double Tya = PBC.separation(y[i]-yp[k],Ly);
-				
-				//System.out.print(xp[k]);
-				//System.out.print(yp[k]);
-				
-				//Test for disks leaving 
-				
 				double dxp = Math.cos(theta[k])*Txa-Math.sin(theta[k])*Tya;
 				double dyp = Math.sin(theta[k])*Txa+Math.cos(theta[k])*Tya; 
 			  if(dxp*dxp + dyp*dyp<(L+.5)*(L+.5)){
 				  Overcond(i,k);
-				  //Consider else statement
 				  if(tworoots==false){
 					  x[i] = PBC.position(x[i]-dxtrial, Lx); // reject displacement 
 					  y[i] = PBC.position(y[i]-dytrial, Ly);
 				  }
-				  // Need to change this 
-				  //System.out.print(tworoots);
-				  //System.out.print(condition);
-				  //System.out.print(" ");
 				  if(condition == true && tworoots==true){
 					   overtest[k][i] = 1;
-					   //System.out.print(IntStream.of(overtest[0]).sum());
 					   
-					   //System.out.print(condition);
-					   
-					  //x[i] = PBC.position(x[i]-dxtrial, Lx); // reject displacement 
-					  //y[i] = PBC.position(y[i]-dytrial, Ly);
-				  
-				  //System.out.print(condition);
 			  }
 				  if(condition == false && tworoots==true){
 					  overtest[k][i]=0; 
@@ -383,17 +326,10 @@ public class DPM4 implements Drawable {
 			  }
 		   }
       }
-      // do probability calculation here. 
-	  //Take sum of one array before updating 
+      // rng here. 
+	 
 	  double rand = Math.random();
-	  //Need to consider overlap 
-	  //Need to generalize, the following only assumes one polymer. (How to access column of array? Not Array[][i]...)
 	  if(tworoots){
-		   
-		   //System.out.print(IntStream.of(overtest[0]).sum());
-		   //System.out.print(" ");
-		   //System.out.print(IntStream.of(over[0]).sum());
-		   //System.out.print(" ");
 	  if(rand<Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && tworoots==true){
 						  arrayCopy(overtest,over);
 					  }
@@ -449,20 +385,13 @@ public class DPM4 implements Drawable {
 				if(b[k]>a[k]){
 			  L = b[k];
 		      }
-		      // all issues lie inside this loop and just outside
+		      
 			  for(int j = 0;j<Nd;++j){
-				  //place conditional based on tworoots
-				  //System.out.print(1);
+				 
 				  if(tworoots==true){
-				//System.out.print(2);	   
+					   
 				double Txa = PBC.separation(x[j]-xp[k],Lx);
 				double Tya = PBC.separation(y[j]-yp[k],Ly);
-				
-				//System.out.print(xp[k]);
-				//System.out.print(yp[k]);
-				
-				//Test for disks leaving 
-				
 				double dxp = Math.cos(theta[k])*Txa-Math.sin(theta[k])*Tya;
 				double dyp = Math.sin(theta[k])*Txa+Math.cos(theta[k])*Tya;
 				
@@ -483,7 +412,6 @@ public class DPM4 implements Drawable {
 				if(dxp*dxp+dyp*dyp<(L+.5)*(L+.5)){
 					Overcond(j,k);
 					if(tworoots==false){
-						//System.out.print(0);
 						continue;
 					}
 					if(condition==true){ 
@@ -491,19 +419,17 @@ public class DPM4 implements Drawable {
 					}
 					
 					if(condition == false){
-					  overtest[k][j]=0;
-					 //System.out.print(0);  
+					  overtest[k][j]=0; 
 				    }
 					
-					//Test for disks entering 
+					 
 					if ((dxp*dxp/a[k]/a[k])+(dyp*dyp/b[k]/b[k])<1){
 						overtest[k][j]=1;
 					}
 					
 					
 					
-				  //System.out.print(condition);
-				  //System.out.print();
+				  
 
 		
 }
@@ -513,21 +439,17 @@ public class DPM4 implements Drawable {
 					  
 				  }
 		
-//System.out.print(theta[0]/Math.PI);
+
 				  
 }
 
 if (tworoots){
  double rand = Math.random();
 
-//System.out.print(IntStream.of(overtest[0]).sum());
-//System.out.print(" ");
-//System.out.print(IntStream.of(over[0]).sum());
-//System.out.print(" ");
 
  if(rand<prob*Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && tworoots==true){
 						  arrayCopy(overtest,over);
-						  //System.out.print(3);
+						  
 					  }
  else if(rand>prob*Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && tworoots==true){
 					  l1[k] = l1[k]-l1trial;
@@ -538,14 +460,14 @@ if (tworoots){
 					  xp[k] = PBC.position(xp[k]-dxtrial, Lx); //reject displacement 
 					  yp[k] = PBC.position(yp[k]-dytrial, Ly);
 					  theta[k] -= dtheta;
-					  //System.out.print(4);
+					  
 					  }
 }
 					  
   
   
  if (!tworoots){
-					  //System.out.print(1); 
+					  
 					  l1[k] = l1[k]-l1trial;
 					  l2[k] = l2[k]-l2trial;
 					  arrayCopy(over,overtest);
@@ -558,39 +480,12 @@ if (tworoots){
   
 }
 
-//System.out.print(IntStream.of(over[0]).sum());
+
 }
 
-/**
-	for(int p = 0;p<Np;++p){
-		overlap = false;
-		dxtrial = tolerance*2.*sizeRatio*(Math.random()-0.5);
-		dytrial = tolerance*2.*sizeRatio*(Math.random()-0.5);
-		xp[p] = PBC.position(xp[p]+dxtrial, Lx); 
-		yp[p] = PBC.position(yp[p]+dytrial, Ly);
-		for(int d = 0;d<Nd;++d){
-			if(overlap != true){
-				double ddxp = PBC.separation(x[d]-xp[p],Lx);
-				double ddyp = PBC.separation(y[d]-yp[p],Ly);
-				if(ddxp*ddxp+ddyp*ddyp<Math.pow((.5*(1+sizeRatio)),2)){
-					overlap = true;
-					xp[p] = PBC.position(xp[p]-dxtrial, Lx); // reject displacement 
-				    yp[p] = PBC.position(yp[p]-dytrial, Ly);
- 		
-}
-}
-}
-}
-*/
 
 
-
-//System.out.print(IntStream.of(over[0]).sum());
-//}
-
-
-
-  // end break
+  
 
   /**
    * Draws the hard disks by painting circles at each hard disk location.
@@ -609,12 +504,6 @@ if (tworoots){
     }
     int pxRadius = Math.abs(drawingPanel.xToPix(radius)-drawingPanel.xToPix(0));
     int pyRadius = Math.abs(drawingPanel.yToPix(radius)-drawingPanel.yToPix(0));
-/* Alan
-    for(int i = 0;i<Np;i++) {
-		pxRadiusP[i] = Math.abs(drawingPanel.xToPix(a[i])-drawingPanel.xToPix(0));
-		pyRadiusP[i] = Math.abs(drawingPanel.yToPix(b[i])-drawingPanel.yToPix(0));
-    } 
-*/
     g.setColor(Color.blue);
     for(int i = 0;i<Nd;i++) {
       int xpix = drawingPanel.xToPix(x[i])-pxRadius;
@@ -630,7 +519,7 @@ if (tworoots){
       Ellipse2D e = new Ellipse2D.Double(xpixP, ypixP, 2*pxRadiusP[i], 2*pyRadiusP[i]);
       AffineTransform at = AffineTransform.getRotateInstance(theta[i], xpixP+pxRadiusP[i], ypixP+pyRadiusP[i]);
       g2.fill(at.createTransformedShape(e));
-      //g.fillOval(xpixP, ypixP, 2*pxRadiusP[i], 2*pyRadiusP[i]);
+      
   } // draw cell boundaries
     g.setColor(Color.black);
     int xpix = drawingPanel.xToPix(0);
