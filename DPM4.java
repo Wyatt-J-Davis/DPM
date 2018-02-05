@@ -11,7 +11,7 @@ import java.util.Arrays;
 /**
  * Does a Monte Carlo simulation for a 2D system of hard disks and polymer
  *
- *@author Alan Denton & Wyatt Davis based on MD code ch08/hd/HardDisksApp.java by Jan Tobochnik, Wolfgang Christian, Harvey Gould
+ *@author Wyatt Davis & Alan Denton based on MD code ch08/hd/HardDisksApp.java by Jan Tobochnik, Wolfgang Christian, Harvey Gould
  *@version 4.0 revised 02/5/18 
  */
  
