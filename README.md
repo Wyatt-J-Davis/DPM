@@ -1,4 +1,4 @@
-# PolymerCrowding_2D
+# DPM
 
 ## Description
 DPM4 (Disk Polymer Mixture V4) is a Monte Carlo simulation developed by Wyatt Davis and Dr. Alan Denton at North Dakota State University to probe the influence of macromolecular crowding on chain polymer conformation when the mixture is confined to a plane. Our coarse-grained modeling approach can be characterized as follows: chain polymers are represented by soft ellipses that fluctuate in size/shape according to random walk statistics, and crowders are represented by hard disks. The results of this simulation will eventually be published in the Journal of Chemical Physics.
