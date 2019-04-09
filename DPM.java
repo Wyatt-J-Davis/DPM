@@ -19,13 +19,21 @@ import java.util.Arrays;
  
 
 public class DPM implements Drawable {
+	// Coordinates of disks
 	public double x[],y[];
-        public double xp[],yp[];
+	// Coordinates of polymers
+    public double xp[],yp[];
+    // Axes size of polymers
   	public double a[],b[];
+  	// Eigenvalues of polymers
   	public double l1[],l2[];
+  	// Angles of polymers about z-axis
   	public double theta[];
+  	// Radius of gyration of uncrowded polymer scaled to the disk radius 
   	public double sizeRatio;
+  	// The energetic cost of a disk penetrating a polymer coil predicted by polymer-field theory
   	public double penetrationCost;
+  	// Constants characterizing polymer gyration tensor eigenvalue distribution functions
   	public double al1 = 1.3690*10001/10000/Math.PI/Math.PI;
   	public double al2 = 1.0972*10001/10000/2/2/Math.PI/Math.PI;
   	public double v1 = 1.8769;
@@ -34,13 +42,21 @@ public class DPM implements Drawable {
   	public double b2 = 2.75939; 
   	public double c1 = 49.3780;
   	public double c2 = 256.564;
+  	// This array characterizes which disks are currently overlapping a polymer 
   	public int over[][];
+  	// This array characterizes which disks could potentially be overlapping a polymer in the next MCS
   	public int overtest[][];
+  	// The acceptance probability of a polymer change in conformation
   	public double prob; 
+  	// Number of disks
   	public int Nd;
+  	// Number of polymers
   	public int Np;
+  	// String that determines solvent quality 
   	String solventQuality;
+  	// Angle for polymer
   	public double phi;
+  	// Scaled length of polymer principal axes 
   	public double Lx,Ly;
   	public double keSum = 0, virialSum = 0;
   	public double steps = 0;
@@ -212,7 +228,7 @@ public class DPM implements Drawable {
 	 	 double C = (b[p]*b[p]/a[p]/a[p]) - 1;
 	 	 // Step 3: Find Roots of Polynomial
 	 	double coef[] = new double[5];
-	        coef[0] = A*C*C;
+	    coef[0] = A*C*C;
 	  	coef[1] = 2*A*C;
 	  	coef[2] = A+B-(C*C);
 	  	coef[3] = -2*C;
@@ -223,6 +239,7 @@ public class DPM implements Drawable {
 	  	double realroot2 = 0;
 	  
  		// start of Alan's edits
+ 		//this needs to be edited... 
 	 	 double realroots[] = new double[4];
          	 int nReal = 0;
          	 for(int i = 0; i < 4; i++){
@@ -255,6 +272,8 @@ public class DPM implements Drawable {
 	//Conducts Monte-Carlo step of a system of hard-disks and soft elliptical ellipses    
 	public void step() {
 		// make trial displacements and check for overlap
+		// What the hell does "condition" mean? (This is why you comment code...)
+		// 
 		tworoots = true;
     		boolean overlap;
     		double dxtrial, dytrial;
