@@ -19,13 +19,21 @@ import java.util.Arrays;
  
 
 public class DPM implements Drawable {
+	// Coordinates of disks
 	public double x[],y[];
-        public double xp[],yp[];
+	// Coordinates of polymers
+    public double xp[],yp[];
+    // Axes size of polymers
   	public double a[],b[];
+  	// Eigenvalues of polymers
   	public double l1[],l2[];
+  	// Angles of polymers about z-axis
   	public double theta[];
+  	// Radius of gyration of uncrowded polymer scaled to the disk radius 
   	public double sizeRatio;
+  	// The energetic cost of a disk penetrating a polymer coil predicted by polymer-field theory
   	public double penetrationCost;
+  	// Constants characterizing polymer gyration tensor eigenvalue distribution functions
   	public double al1 = 1.3690*10001/10000/Math.PI/Math.PI;
   	public double al2 = 1.0972*10001/10000/2/2/Math.PI/Math.PI;
   	public double v1 = 1.8769;
@@ -34,13 +42,21 @@ public class DPM implements Drawable {
   	public double b2 = 2.75939; 
   	public double c1 = 49.3780;
   	public double c2 = 256.564;
+  	// This array characterizes which disks are currently overlapping a polymer 
   	public int over[][];
+  	// This array characterizes which disks could potentially be overlapping a polymer in the next MCS
   	public int overtest[][];
+  	// The acceptance probability of a polymer change in conformation
   	public double prob; 
+  	// Number of disks
   	public int Nd;
+  	// Number of polymers
   	public int Np;
+  	// String that determines solvent quality 
   	String solventQuality;
+  	// Angle for polymer
   	public double phi;
+  	// Scaled length of polymer principal axes 
   	public double Lx,Ly;
   	public double keSum = 0, virialSum = 0;
   	public double steps = 0;
@@ -49,7 +65,7 @@ public class DPM implements Drawable {
   	public double l1tolerance = .005;
   	public double l2tolerance = .001;
   	public boolean condition = false;
-  	public boolean tworoots = true;
+  	public boolean realroots = true;
   	public void initialize(String configuration) {
         	resetAverages();
     		x = new double[Nd];
@@ -200,7 +216,7 @@ public class DPM implements Drawable {
 	//Determines whether overlap occurs between elliptical polymer and disk
   	public void Overcond(int d, int p){
 	  	// Step 1: Coordinate Transform
-	 	 tworoots = true;
+	 	 realroots = true;
 		 condition = false; 
 	 	 double Txa = PBC.separation(x[d]-xp[p], Lx);
 	 	 double Tya = PBC.separation(y[d]-yp[p], Ly); 
@@ -212,7 +228,7 @@ public class DPM implements Drawable {
 	 	 double C = (b[p]*b[p]/a[p]/a[p]) - 1;
 	 	 // Step 3: Find Roots of Polynomial
 	 	double coef[] = new double[5];
-	        coef[0] = A*C*C;
+	    coef[0] = A*C*C;
 	  	coef[1] = 2*A*C;
 	  	coef[2] = A+B-(C*C);
 	  	coef[3] = -2*C;
@@ -221,41 +237,72 @@ public class DPM implements Drawable {
 	  	double roots[][] = Root.polynomial(coef);
 	  	double realroot1 = 0; 
 	  	double realroot2 = 0;
+	  	double realroot3 = 0;
+	  	double realroot4 = 0;
 	  
  		// start of Alan's edits
-	 	 double realroots[] = new double[4];
+ 		//this needs to be edited... 
+	 	 double realroot_ary[] = new double[4];
          	 int nReal = 0;
          	 for(int i = 0; i < 4; i++){
 	    	 	if(roots[1][i]*roots[1][i] < 1.e-40){ 
-                 		realroots[nReal] = roots[0][i];
+                 		realroot_ary[nReal] = roots[0][i];
                			nReal++;
              	 	}
           	 }
-          	 if(nReal != 2){
-             	 tworoots = false;
-          	 }                        
-          	 else{
-             		realroot1 = realroots[0];
-             		realroot2 = realroots[1];
+          	 // Replace `realroots` with realroots 
+          	 if(nReal ==  2){
+             	realroot1 = realroot_ary[0];
+             	realroot2 = realroot_ary[1];
 	     		double xone = Tx/realroot1;
 	     		double xtwo = Tx/realroot2;
 	     		double yone = b[p]*b[p]*Ty*xone/a[p]/a[p]/(Tx+((b[p]*b[p]/a[p]/a[p])-1)*xone);
 	     		double ytwo = b[p]*b[p]*Ty*xtwo/a[p]/a[p]/(Tx+((b[p]*b[p]/a[p]/a[p])-1)*xtwo);
+	 		    if((xone-Tx)*(xone-Tx)+(yone-Ty)*(yone-Ty) < .25){
+					condition = true;
+	     		}
+	     		else if((xtwo-Tx)*(xtwo-Tx)+(ytwo-Ty)*(ytwo-Ty) < .25){
+					condition = true;
+	     		}
+          	 }                       
+          	 else if (nReal == 4){
+             	realroot1 = realroot_ary[0];
+             	realroot2 = realroot_ary[1];
+             	realroot3 = realroot_ary[2];
+             	realroot4 = realroot_ary[3];
+	     		double xone = Tx/realroot1;
+	     		double xtwo = Tx/realroot2;
+	     		double xthree = Tx/realroot3;
+	     	    double xfour = Tx/realroot4;
+	     		double yone = b[p]*b[p]*Ty*xone/a[p]/a[p]/(Tx+((b[p]*b[p]/a[p]/a[p])-1)*xone);
+	     		double ytwo = b[p]*b[p]*Ty*xtwo/a[p]/a[p]/(Tx+((b[p]*b[p]/a[p]/a[p])-1)*xtwo);
+	     		double ythree = b[p]*b[p]*Ty*xthree/a[p]/a[p]/(Tx+((b[p]*b[p]/a[p]/a[p])-1)*xthree);
+	     		double yfour = b[p]*b[p]*Ty*xthree/a[p]/a[p]/(Tx+((b[p]*b[p]/a[p]/a[p])-1)*xfour); 
 	 		if((xone-Tx)*(xone-Tx)+(yone-Ty)*(yone-Ty) < .25){
 				condition = true;
 	     		}
 	     		else if((xtwo-Tx)*(xtwo-Tx)+(ytwo-Ty)*(ytwo-Ty) < .25){
 				condition = true;
 	     		}
+	     		else if((xthree-Tx)*(xthree-Tx)+(ythree-Ty)*(ythree-Ty) < .25){
+				condition = true;
+	     		}
+	     		else if((xfour-Tx)*(xfour-Tx)+(yfour-Ty)*(yfour-Ty) < .25){
+				condition = true;
+	     		}
           	} 
-		// end of Alan's edits
+          	else{
+          		realroots = false;
+          	 } 
 	}
 
  
 	//Conducts Monte-Carlo step of a system of hard-disks and soft elliptical ellipses    
 	public void step() {
 		// make trial displacements and check for overlap
-		tworoots = true;
+		// What the hell does "condition" mean? (This is why you comment code...)
+		// 
+		realroots = true;
     		boolean overlap;
     		double dxtrial, dytrial;
     		double l1trial, l2trial;
@@ -263,7 +310,7 @@ public class DPM implements Drawable {
     		double dtheta; 
     		for(int i = 0;i<Nd;++i) {
       			overlap = false;
-      			tworoots = true; 
+      			realroots = true; 
       			dxtrial = tolerance*2.*(Math.random()-0.5);
       			dytrial = tolerance*2.*(Math.random()-0.5);
       			x[i] = PBC.position(x[i]+dxtrial, Lx); 
@@ -280,16 +327,16 @@ public class DPM implements Drawable {
         			}
       			}
       			condition = false;
-      			tworoots = true;
+      			realroots = true;
       			for(int k = 0; k<Np; k++){
-				if(overlap != true && tworoots!=false){
+				if(overlap != true && realroots!=false){
 			 	L = a[k];
 			  	if(b[k]>=a[k]){
 					L = b[k];
 				}
 				if(over[k][i]==1){
 					Overcond(i,k);
-					if(tworoots==true && condition==false){
+					if(realroots==true && condition==false){
 						overtest[k][i] = 0;
 					}
 				}
@@ -299,14 +346,14 @@ public class DPM implements Drawable {
 				double dyp = Math.sin(theta[k])*Txa+Math.cos(theta[k])*Tya; 
 			  	if(dxp*dxp+dyp*dyp<(L+.5)*(L+.5)){
 					Overcond(i,k);  
-					if(tworoots==false){
+					if(realroots==false){
 						x[i] = PBC.position(x[i]-dxtrial, Lx); // reject displacement 
 						y[i] = PBC.position(y[i]-dytrial, Ly);
 				  	}
-				  	if(condition == true && tworoots==true){
+				  	if(condition == true && realroots==true){
 						overtest[k][i] = 1;
 			  		}
-				  	if(condition == false && tworoots==true){
+				  	if(condition == false && realroots==true){
 					  	overtest[k][i]=0; 
 				  	}
 				  	if((dxp*dxp/a[k]/a[k])+(dyp*dyp/b[k]/b[k])<1){
@@ -317,11 +364,11 @@ public class DPM implements Drawable {
 		   	}
 		}
    		double rand = Math.random();
-	  	if(tworoots){
-	  		if(rand<Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && tworoots==true){
+	  	if(realroots){
+	  		if(rand<Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && realroots==true){
 				arrayCopy(overtest,over);
 			}
-			else if(rand>Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && tworoots==true){
+			else if(rand>Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && realroots==true){
 				arrayCopy(over,overtest);
 				x[i] = PBC.position(x[i]-dxtrial, Lx); // reject displacement 
 				y[i] = PBC.position(y[i]-dytrial, Ly);
@@ -331,7 +378,7 @@ public class DPM implements Drawable {
       		condition = false; 
       		for(int k = 0; k<Np; k++){
 			condition = false;
-			tworoots = true;
+			realroots = true;
 			dxtrial = tolerance*2.*(Math.random()-0.5);
 			dytrial = tolerance*2.*(Math.random()-0.5);
 			l1trial = l1tolerance*2.*(Math.random()-0.5);
@@ -380,17 +427,17 @@ public class DPM implements Drawable {
 				L = b[k];
 		      	 }
 		         for(int j = 0;j<Nd;++j){
-				if(tworoots==true){	   
+				if(realroots==true){	   
 					double Txa = PBC.separation(x[j]-xp[k],Lx);
 					double Tya = PBC.separation(y[j]-yp[k],Ly);
 					double dxp = Math.cos(theta[k])*Txa-Math.sin(theta[k])*Tya;
 					double dyp = Math.sin(theta[k])*Txa+Math.cos(theta[k])*Tya;
 					if(over[k][j]==1){ 
 						Overcond(j,k);
-						if(!tworoots){
+						if(!realroots){
 							continue;
 						}
-						if(tworoots==true){
+						if(realroots==true){
 							if(condition==false){
 								overtest[k][j]=0;
 							}
@@ -401,7 +448,7 @@ public class DPM implements Drawable {
 					}
 					if(dxp*dxp+dyp*dyp<(L+.5)*(L+.5)){
 						Overcond(j,k);
-						if(tworoots==false){
+						if(realroots==false){
 							continue;
 						}
 						if(condition==true){ 
@@ -417,12 +464,12 @@ public class DPM implements Drawable {
 			}	  
 		}
 
-		if (tworoots){
+		if (realroots){
  			double rand = Math.random();
- 			if(rand<prob*Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && tworoots==true){
+ 			if(rand<prob*Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && realroots==true){
 				arrayCopy(overtest,over);
 			}
- 			else if(rand>prob*Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && tworoots==true){
+ 			else if(rand>prob*Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && realroots==true){
 				l1[k] -= l1trial;
 				l2[k] -= l2trial;
 				arrayCopy(over,overtest);
@@ -439,7 +486,7 @@ public class DPM implements Drawable {
 				theta[k] -= dtheta;
 			}
 		}	  
- 		if (!tworoots){
+ 		if (!realroots){
 			l1[k] -= l1trial;
 			l2[k] -= l2trial;
 			arrayCopy(over,overtest);
