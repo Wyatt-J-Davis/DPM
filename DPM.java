@@ -1,4 +1,5 @@
 package org.opensourcephysics.sip.DPM;
+
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.AffineTransform;
@@ -12,8 +13,7 @@ import java.util.Arrays;
  * HardDisksApp does a Monte Carlo simulation for a 2D system of hard disks 
  *
  *@author Alan Denton & Wyatt Davis based on MD code ch08/hd/HardDisksApp.java by Jan Tobochnik, Wolfgang Christian, Harvey Gould
- *@version 1.1 revised 04/10/17
- * Started as copy of Rotate_2 
+ * 
  */
  
  
@@ -295,6 +295,15 @@ public class DPM implements Drawable {
           		realroots = false;
           	 } 
 	}
+    // Method developed to sum up the elements of the 2D `overtest` and `over` arrays 
+	public int arySum(int inpAry[][], int Np, int Nd){
+		int sum = 0; 
+		for (int i = 0; i<Nd; i++){
+			for(int j = 0; j<Np; j++)
+				sum += inpAry[j][i];
+		}
+		return sum; 
+	}
 
  
 	//Conducts Monte-Carlo step of a system of hard-disks and soft elliptical ellipses    
@@ -308,6 +317,7 @@ public class DPM implements Drawable {
     		double l1trial, l2trial;
     		double L;
     		double dtheta; 
+    		// Start iterating through disks to perform checks for disk-disk and disk-polymer overlaps
     		for(int i = 0;i<Nd;++i) {
       			overlap = false;
       			realroots = true; 
@@ -315,6 +325,7 @@ public class DPM implements Drawable {
       			dytrial = tolerance*2.*(Math.random()-0.5);
       			x[i] = PBC.position(x[i]+dxtrial, Lx); 
       			y[i] = PBC.position(y[i]+dytrial, Ly); 
+      			// Start of disk-disk overlap check
 			for(int j = 0;j<Nd;++j) {
         			if((j!=i)&&!overlap) {
           				double dx = PBC.separation(x[i]-x[j], Lx);
@@ -326,14 +337,17 @@ public class DPM implements Drawable {
           				}
         			}
       			}
+      			// End of disk-disk overlap check
       			condition = false;
       			realroots = true;
+      			// Start of disk-polymer overlap check
       			for(int k = 0; k<Np; k++){
-				if(overlap != true && realroots!=false){
-			 	L = a[k];
-			  	if(b[k]>=a[k]){
-					L = b[k];
-				}
+					if(overlap != true && realroots!=false){
+			 			L = a[k];
+			  			if(b[k]>=a[k]){
+							L = b[k];
+					}
+
 				if(over[k][i]==1){
 					Overcond(i,k);
 					if(realroots==true && condition==false){
@@ -363,12 +377,14 @@ public class DPM implements Drawable {
 			  	}
 		   	}
 		}
+		// Come up with function that sums up contents of 2D input array.
    		double rand = Math.random();
 	  	if(realroots){
-	  		if(rand<Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && realroots==true){
+	  		//if(rand<Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && realroots==true){
+	  		if(rand<Math.exp(-penetrationCost*(arySum(overtest, Np, Nd)-arySum(over, Np, Nd))) && realroots==true){
 				arrayCopy(overtest,over);
 			}
-			else if(rand>Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && realroots==true){
+			else if(rand>Math.exp(-penetrationCost*(arySum(overtest, Np, Nd)-arySum(over, Np, Nd))) && realroots==true){
 				arrayCopy(over,overtest);
 				x[i] = PBC.position(x[i]-dxtrial, Lx); // reject displacement 
 				y[i] = PBC.position(y[i]-dytrial, Ly);
@@ -376,6 +392,7 @@ public class DPM implements Drawable {
 		}
 		}
       		condition = false; 
+      		// Start of 
       		for(int k = 0; k<Np; k++){
 			condition = false;
 			realroots = true;
@@ -464,12 +481,13 @@ public class DPM implements Drawable {
 			}	  
 		}
 
+		// need to write function that takes sum of `overtest` 
 		if (realroots){
  			double rand = Math.random();
- 			if(rand<prob*Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && realroots==true){
+ 			if(rand<prob*Math.exp((-penetrationCost*(arySum(overtest, Np, Nd)-arySum(over, Np, Nd)))) && realroots==true){
 				arrayCopy(overtest,over);
 			}
- 			else if(rand>prob*Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && realroots==true){
+ 			else if(rand>prob*Math.exp((-penetrationCost*(arySum(overtest, Np, Nd)-arySum(over, Np, Nd)))) && realroots==true){
 				l1[k] -= l1trial;
 				l2[k] -= l2trial;
 				arrayCopy(over,overtest);
