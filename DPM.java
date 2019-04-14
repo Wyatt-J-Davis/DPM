@@ -310,7 +310,8 @@ public class DPM implements Drawable {
 	public void step() {
 		// make trial displacements and check for overlap
 		// What the hell does "condition" mean? (This is why you comment code...)
-		// 
+		//
+		System.out.print(arySum(over,Np,Nd)); 
 		realroots = true;
     		boolean overlap;
     		double dxtrial, dytrial;
@@ -480,8 +481,6 @@ public class DPM implements Drawable {
 					}
 			}	  
 		}
-
-		// need to write function that takes sum of `overtest` 
 		if (realroots){
  			double rand = Math.random();
  			if(rand<prob*Math.exp((-penetrationCost*(arySum(overtest, Np, Nd)-arySum(over, Np, Nd)))) && realroots==true){
