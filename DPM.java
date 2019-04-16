@@ -309,9 +309,7 @@ public class DPM implements Drawable {
 	//Conducts Monte-Carlo step of a system of hard-disks and soft elliptical ellipses    
 	public void step() {
 		// make trial displacements and check for overlap
-		// What the hell does "condition" mean? (This is why you comment code...)
-		//
-		System.out.print(arySum(over,Np,Nd)); 
+		
 		realroots = true;
     		boolean overlap;
     		double dxtrial, dytrial;
@@ -319,6 +317,7 @@ public class DPM implements Drawable {
     		double L;
     		double dtheta; 
     		// Start iterating through disks to perform checks for disk-disk and disk-polymer overlaps
+    		/*
     		for(int i = 0;i<Nd;++i) {
       			overlap = false;
       			realroots = true; 
@@ -392,8 +391,11 @@ public class DPM implements Drawable {
 			}
 		}
 		}
+		*/
+		
       		condition = false; 
-      		// Start of 
+      		// Start of polymer loop to check for polymer-disk overlap upon polymer move
+      		//Somthing is wrong between here...
       		for(int k = 0; k<Np; k++){
 			condition = false;
 			realroots = true;
@@ -481,6 +483,7 @@ public class DPM implements Drawable {
 					}
 			}	  
 		}
+		System.out.print(arySum(overtest, Np, Nd));
 		if (realroots){
  			double rand = Math.random();
  			if(rand<prob*Math.exp((-penetrationCost*(arySum(overtest, Np, Nd)-arySum(over, Np, Nd)))) && realroots==true){
@@ -521,6 +524,8 @@ public class DPM implements Drawable {
 		} 
   
 	}
+	//and here. 
+	
 	}
 	
 	//Draw the polymer-nanoparticle mixture
