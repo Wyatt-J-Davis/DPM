@@ -447,11 +447,13 @@ public class DPM implements Drawable {
 				L = b[k];
 		      	 }
 		         for(int j = 0;j<Nd;++j){
+		         	// If overtest "returns" two or four real roots then the  
 				if(realroots==true){	   
 					double Txa = PBC.separation(x[j]-xp[k],Lx);
 					double Tya = PBC.separation(y[j]-yp[k],Ly);
 					double dxp = Math.cos(theta[k])*Txa-Math.sin(theta[k])*Tya;
 					double dyp = Math.sin(theta[k])*Txa+Math.cos(theta[k])*Tya;
+					// The following checks to see if disks already overlapping the polymer are exiting or staying in the polymer upon this trial move of the polymer and updates `overtest` accordingly 
 					if(over[k][j]==1){ 
 						Overcond(j,k);
 						if(!realroots){
@@ -466,6 +468,9 @@ public class DPM implements Drawable {
 							}
 				    		}
 					}
+					// End 
+
+					// The following checks for overlaps only if the disk falls within the radius of possible overlap of the polymer
 					if(dxp*dxp+dyp*dyp<(L+.5)*(L+.5)){
 						Overcond(j,k);
 						if(realroots==false){
@@ -481,8 +486,10 @@ public class DPM implements Drawable {
 							overtest[k][j]=1;
 						}
 					}
+					//end
 			}	  
 		}
+		// Start up here next time (4/17/19)
 		System.out.print(arySum(overtest, Np, Nd));
 		if (realroots){
  			double rand = Math.random();
