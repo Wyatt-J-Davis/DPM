@@ -6,21 +6,11 @@ import org.opensourcephysics.display.*;
 import org.opensourcephysics.frames.*;
 import org.opensourcephysics.numerics.*;
 import java.util.stream.*;
-import java.util.Arrays;
-
-/**
- * HardDisksApp does a Monte Carlo simulation for a 2D system of hard disks 
- *
- *@author Alan Denton & Wyatt Davis based on MD code ch08/hd/HardDisksApp.java by Jan Tobochnik, Wolfgang Christian, Harvey Gould
- *@version 1.1 revised 04/10/17
- * Started as copy of Rotate_2 
- */
- 
- 
+import java.util.Arrays; 
 
 public class DPM implements Drawable {
 	public double x[],y[];
-        public double xp[],yp[];
+    public double xp[],yp[];
   	public double a[],b[];
   	public double l1[],l2[];
   	public double theta[];
@@ -39,7 +29,7 @@ public class DPM implements Drawable {
   	public double prob; 
   	public int Nd;
   	public int Np;
-  	String solventQuality;
+  	public String solventQuality;
   	public double phi;
   	public double Lx,Ly;
   	public double keSum = 0, virialSum = 0;
