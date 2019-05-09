@@ -9,13 +9,21 @@ import java.util.stream.*;
 import java.util.Arrays; 
 
 public class DPM implements Drawable {
+	// Coordinates of disks
 	public double x[],y[];
+	// Coordinates of polymers
     public double xp[],yp[];
+    // Axes size of polymers
   	public double a[],b[];
+  	// Eigenvalues of polymers
   	public double l1[],l2[];
+  	// Angles of polymers about z-axis
   	public double theta[];
+  	// Radius of gyration of uncrowded polymer scaled to the disk radius 
   	public double sizeRatio;
+  	// The energetic cost of a disk penetrating a polymer coil predicted by polymer-field theory
   	public double penetrationCost;
+  	// Constants characterizing polymer gyration tensor eigenvalue distribution functions
   	public double al1 = 1.3690*10001/10000/Math.PI/Math.PI;
   	public double al2 = 1.0972*10001/10000/2/2/Math.PI/Math.PI;
   	public double v1 = 1.8769;
@@ -24,13 +32,21 @@ public class DPM implements Drawable {
   	public double b2 = 2.75939; 
   	public double c1 = 49.3780;
   	public double c2 = 256.564;
+  	// This array characterizes which disks are currently overlapping a polymer 
   	public int over[][];
+  	// This array characterizes which disks could potentially be overlapping a polymer in the next MCS
   	public int overtest[][];
+  	// The acceptance probability of a polymer change in conformation
   	public double prob; 
+  	// Number of disks
   	public int Nd;
+  	// Number of polymers
   	public int Np;
-  	public String solventQuality;
+  	// String that determines solvent quality 
+  	String solventQuality;
+  	// Angle for polymer
   	public double phi;
+  	// Scaled length of polymer principal axes 
   	public double Lx,Ly;
   	public double keSum = 0, virialSum = 0;
   	public double steps = 0;
@@ -40,6 +56,8 @@ public class DPM implements Drawable {
   	public double l2tolerance = .001;
   	public boolean condition = false;
   	public boolean tworoots = true;
+
+
   	public void initialize(String configuration) {
         	resetAverages();
     		x = new double[Nd];
@@ -57,17 +75,18 @@ public class DPM implements Drawable {
     		if(configuration.equals("regular")) {
       			setRegularPositions();
     		} 
-		else {
+			else {
       			setRandomPositions();
     		}
    	}
 
-
-	public void resetAverages() {
-        	steps = 0;
-    		virialSum = 0;
-  	}
+   	// 
+//	public void resetAverages() {
+//      	steps = 0;
+//			virialSum = 0;
+//  }
   
+  	// Set the positions of both disks and polymers to be random (without any disk-polymer overlap)
 	public void setRandomPositions() {
         	boolean overlap;
     		for(int i = 0;i<Nd;++i) {
@@ -88,6 +107,7 @@ public class DPM implements Drawable {
     		}
   	}
 	
+
 	//Set the initial positions of the disks and ellipse
 	public void setRegularPositions() {
     		double dnx = Math.sqrt(Nd);
@@ -114,16 +134,17 @@ public class DPM implements Drawable {
       			}
     			iy++;
     		}
-    
-    
-    		boolean overlap;
-		for(int j = 0; j<Np; ++j){
+    	boolean overlap;
+    	// The following loop initializes polymers to random locations so long as none of them overlap with disks 
+		for(int j = 0; j<Np; ++j) {
 			do{
 				overlap = false;
 				xp[j] = Lx*Math.random();
 				yp[j] = Ly*Math.random();
+				//Set each polymer to be initially equal to size/shape of a disk
 				a[j] = .5;
 				b[j] = .5;
+				//Initialze gyration tensor eigenvalue depending on solvent quality
 				if (solventQuality.equals("theta")){
 					l1[j] = Math.pow(a[j]/sizeRatio/.5,2)/12;
 					l2[j] = Math.pow(b[j]/sizeRatio/.5,2)/12;
@@ -133,30 +154,30 @@ public class DPM implements Drawable {
 					l2[j] = Math.pow(b[j]/sizeRatio/2.15016,2);
 				}
 				int k = 0;
+				// Check for any overlaps with disks. If one is found, the `do` block is redone for the same polymer
 				while(overlap==false&&k<Nd){
 					double dx=PBC.separation(xp[j]-x[k], Lx);
 					double dy=PBC.separation(yp[j]-y[k], Ly);
 					if (dx*dx+dy*dy<1){
 						overlap = true;
+						break;
 					}
 					k++;
 				}
 			} while(overlap); 
 		}
-//Continue with random placement 
 	}
+
 
  	//Probability distribution for theta-solvent
 	public void sciutto_th(int p, double dl1, double dl2){
 		double L1O = 0; double L2O = 0;
 		double L1N = 0; double L2N = 0;
-	  
+		// Assign the eigenvalue associated with longer polymer principal axes to L1 and shorter to L2	  
 		if(l1[p]>=l2[p]){
 			L1O = l1[p]; L1N = L1O + dl1;
 			L2O = l2[p]; L2N = L2O + dl2;
-		  
 	  	}
-	  
 	  	else if(l1[p]<l2[p]){
 			L1O = l2[p]; L1N = L1O + dl2;
 			L2O = l1[p]; L2N = L2O + dl1;
@@ -164,11 +185,12 @@ public class DPM implements Drawable {
 	  	prob = Math.pow(L1N/L1O,v1-1)*Math.pow(L2N/L2O,v2-1)*Math.exp(-v1*(L1N-L1O)/al1-v2*(L2N-L2O)/al2);	  
   	}
   	
+
 	//Probability distribution for good-solvent
 	public void sciutto_go(int p, double dl1, double dl2){
 		double L1O = 0; double L2O = 0;
 	  	double L1N = 0; double L2N = 0;
-	  
+	  	// Assign the eigenvalue associated with longer polymer principal axes to L1 and shorter to L2
 	  	if(l1[p]>=l2[p]){
 		  	L1O = l1[p]; L1N = L1O + dl1;
 		  	L2O = l2[p]; L2N = L2O + dl2;	  
@@ -180,6 +202,7 @@ public class DPM implements Drawable {
 	  	prob = Math.pow(L1N/L1O,b1)*Math.pow(L2N/L2O,b2)*Math.exp(-c1*(L1N-L1O)-c2*(L2N-L2O));	  
   	}
   
+
  	 //Make B a copy of array A (A and B must be of the same dimensions) 
   	public void arrayCopy(int A[][], int B[][]){
 	  	for(int i=0; i<A.length; i++)
@@ -187,6 +210,7 @@ public class DPM implements Drawable {
          			B[i][j]=A[i][j];
         }   
   
+
 	//Determines whether overlap occurs between elliptical polymer and disk
   	public void Overcond(int d, int p){
 	  	// Step 1: Coordinate Transform
@@ -202,7 +226,7 @@ public class DPM implements Drawable {
 	 	 double C = (b[p]*b[p]/a[p]/a[p]) - 1;
 	 	 // Step 3: Find Roots of Polynomial
 	 	double coef[] = new double[5];
-	        coef[0] = A*C*C;
+	    coef[0] = A*C*C;
 	  	coef[1] = 2*A*C;
 	  	coef[2] = A+B-(C*C);
 	  	coef[3] = -2*C;
