@@ -15,13 +15,14 @@ import java.util.ArrayList;
 import java.util.Calendar; 
 
 /**
- * DPMnewApp does a Monte Carlo simulation for a 2D mixture of fluctuating penetrable ellipses and hard disks 
+ * DPMnewApp does a Monte Carlo simulation for a 2D mixture of fluctuating penetrable 
+ * ellipses and hard disks (ellipses also translate and rotate)
  *
- * @author Alan Denton & Wyatt Davis based on OSP code by Jan Tobochnik, Wolfgang Christian, Harvey Gould
- * @version 1.1 revised 19/05/19
- * 
- */ 
- 
+ * @author Alan Denton & Wyatt Davis based on code ch08/hd/HardDisksApp.java 
+ * by Jan Tobochnik, Wolfgang Christian, Harvey Gould
+ * @version 1.1 revised 21/05/19
+ */
+
  
 public class DPMnewApp extends AbstractSimulation {
 	DPMnew hd = new DPMnew();
@@ -59,9 +60,10 @@ public class DPMnewApp extends AbstractSimulation {
 
   	//Dictates how data are taken over duration of simulation
   	public void doStep() {
-		if(k<6){
+		//if(k<6){ // 5 independent runs
+		if(k<2){ // a single run
 	  	if(k==0 && i==0){
-			File dir1 = new File("data/DPM/phiN="+hd.phi+"/q="+(int)hd.sizeRatio+"/phiN="+hd.phi);
+			File dir1 = new File("data/DPM/phiN="+hd.phi);
 		  	boolean successful1 = dir1.mkdir();
     			if (successful1){
       				System.out.println("directory was created successfully");
@@ -69,8 +71,9 @@ public class DPMnewApp extends AbstractSimulation {
     			else{
       				System.out.println("failed trying to create the directory");
     			} 
-		  	for(int n=1; n<6; n++){
-		  		File dir2 = new File("data/DPM/phiN="+hd.phi+"/q="+(int)hd.sizeRatio+"/phiN="+hd.phi+"/"+n);
+		  	//for(int i=1; i<6; i++){ // 5 independent runs
+		  	for(int i=1; i<2; i++){ // a single run
+		  		File dir2 = new File("data/DPM/phiN="+hd.phi+"/"+i);
 				boolean successful2 = dir2.mkdir();
     				if (successful2){
       					System.out.println("directory was created successfully");
@@ -79,26 +82,27 @@ public class DPMnewApp extends AbstractSimulation {
       					System.out.println("failed trying to create the directory");
     				} 
     				try{    
-           				FileWriter fw=new FileWriter("data/DPM/phiN="+hd.phi+"/q="+(int)hd.sizeRatio+"/"+"phiN="+hd.phi+"/"+n+"/phiN="+hd.phi+"_eX.dat");
+           				FileWriter fw=new FileWriter("data/DPM/phiN="+hd.phi+"/"+i+"/"+"phiN="+hd.phi+"_eX.dat");      
           			}catch(Exception e){System.out.println(e);}    
           			System.out.println("Success..."); 
     				try{    
-           				FileWriter fw=new FileWriter("data/DPM/phiN="+hd.phi+"/q="+(int)hd.sizeRatio+"/"+"phiN="+hd.phi+"/"+n+"/phiN="+hd.phi+"_eY.dat");
+           				FileWriter fw=new FileWriter("data/DPM/phiN="+hd.phi+"/"+i+"/"+"phiN="+hd.phi+"_eY.dat");       
           			}catch(Exception e){System.out.println(e);}    
           			System.out.println("Success...");    
 			}
 			k++;
 		}
 	  //check if enough data points have been taken
-		if(j<1e4){ // number of data points (NOT number of steps)
-			if(i<1e4){ // number of equilibration steps
+		if(j<1e6){ // number of data points (NOT number of steps)
+			if(i<1e5){ // number of equilibration steps
 				hd.step();
 				i++;
 			}
 			else{ // data collection 
 				hd.step(); 
 				i++;
-				if (i%100 == 0){
+				//if (i%100 == 0){ // interval between samples
+				if(i%10 == 0){
 					if(hd.l1[0]>=hd.l2[0]){
                                         	L1dat.add(hd.l1[0]);
                                         	L2dat.add(hd.l2[0]);
@@ -114,8 +118,8 @@ public class DPMnewApp extends AbstractSimulation {
 		}
      		//WRITE DATA 
 		else{
-			String strFilePathX = "data/DPM/phiN="+hd.phi+"/q="+(int)hd.sizeRatio+"/"+"phiN="+hd.phi+"/"+k+"/phiN="+hd.phi+"_eX.dat";
-			String strFilePathY = "data/DPM/phiN="+hd.phi+"/q="+(int)hd.sizeRatio+"/"+"phiN="+hd.phi+"/"+k+"/phiN="+hd.phi+"_eY.dat";
+			String strFilePathX = "data/DPM/phiN="+hd.phi+"/"+k+"/"+"phiN="+hd.phi+"_eX.dat";
+			String strFilePathY = "data/DPM/phiN="+hd.phi+"/"+k+"/"+"phiN="+hd.phi+"_eY.dat";
 			System.out.println(strFilePathX); 
 			try{    
           			FileWriter fwX = new FileWriter(strFilePathX);
@@ -150,14 +154,14 @@ public class DPMnewApp extends AbstractSimulation {
    */
 	public void reset() {
     		enableStepsPerDisplay(true);
-    		control.setValue("Nd", 225);
+    		control.setValue("Nd", 100);
     		control.setValue("Np", 1);
     		control.setValue("phi", 0.3);
    	        control.setValue("tolerance", 0.1);
    	        control.setValue("theta tolerance", 0.05);
    	        control.setValue("shape tolerance", 0.001); // about 10% of most probable principal radius
     		control.setValue("initial configuration", "square");
-    		control.setValue("size ratio", 10);
+    		control.setValue("size ratio", 1);
                 control.setValue("penetration cost", 0.5);
                 control.setValue("solvent quality", "good");
                 //control.setValue("solvent quality", "theta");

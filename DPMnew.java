@@ -9,11 +9,12 @@ import java.util.stream.*;
 import java.util.Arrays;
 
 /**
- * DPMnew does a Monte Carlo simulation for a 2D mixture of fluctuating penetrable ellipses 
- * and hard disks (ellipses do not translate or rotate)
+ * DPMnew does a Monte Carlo simulation for a 2D mixture of fluctuating penetrable 
+ * ellipses and hard disks (ellipses also translate and rotate)
  *
- * @author Alan Denton & Wyatt Davis based on OSP code by Jan Tobochnik, Wolfgang Christian, Harvey Gould
- * @version 1.1 revised 19/05/19
+ * @author Alan Denton & Wyatt Davis based on code ch08/hd/HardDisksApp.java 
+ * by Jan Tobochnik, Wolfgang Christian, Harvey Gould
+ * @version 1.1 revised 21/05/19
  */
  
 
@@ -43,6 +44,7 @@ public class DPMnew implements Drawable {
   	public double Lx, Ly;
   	public double steps = 0;
   	public double tolerance;
+	public double thetaTolerance;
   	public double shapeTolerance;
   	public boolean condition;
 
@@ -121,7 +123,7 @@ public class DPMnew implements Drawable {
     		}
     
     		boolean overlap;
-		for(int k=0; k<Np; ++k){ // place ellipses at interstitial sites
+		for(int k=0; k<Np; ++k){ // place ellipses at interstitial site
 			do{
 				overlap = false;
 				xp[k] = (nx/2+0.5)*ax;
@@ -149,6 +151,7 @@ public class DPMnew implements Drawable {
 				}
 			} while(overlap); 
 		}
+		//Continue with random placement 
 	}
 
         //Probability distribution for polymer shape in a theta solvent
@@ -192,8 +195,10 @@ public class DPMnew implements Drawable {
   	public void Overcond(int d, int p){ // disk (d) and polymer (p) indices
 	  	// Step 1: Coordinate transform
 		condition = false; 
-		double Tx = PBC.separation(x[d]-xp[p], Lx); // no rotations
-		double Ty = PBC.separation(y[d]-yp[p], Ly); 
+		double Txa = PBC.separation(x[d]-xp[p], Lx);
+		double Tya = PBC.separation(y[d]-yp[p], Ly); 
+                double Tx = Math.cos(theta[p])*Txa-Math.sin(theta[p])*Tya;
+                double Ty = Math.sin(theta[p])*Txa+Math.cos(theta[p])*Tya;
 		// Step 2: Calculate coefficients of polynomial
 		double A = Tx*Tx/a[p]/a[p];
 		double B = b[p]*b[p]*Ty*Ty/a[p]/a[p]/a[p]/a[p];
@@ -225,6 +230,7 @@ public class DPMnew implements Drawable {
     		boolean overlap;
     		double dxtrial, dytrial;
     		double dl1trial, dl2trial;
+                double dtheta;
     		double L;
 		
                 // make trial moves and check for overlaps
@@ -257,8 +263,10 @@ public class DPMnew implements Drawable {
       				for(int k=0; k<Np; k++){ // check for overlaps with polymers
       					condition = false;
                                         L = Math.max(a[k], b[k]);
-                                        double dxp = PBC.separation(x[i]-xp[k], Lx); // no rotations
-                                        double dyp = PBC.separation(y[i]-yp[k], Ly);
+                                        double Txa = PBC.separation(x[i]-xp[k], Lx);
+                                        double Tya = PBC.separation(y[i]-yp[k], Ly);
+                                        double dxp = Math.cos(theta[k])*Txa-Math.sin(theta[k])*Tya;
+                                        double dyp = Math.sin(theta[k])*Txa+Math.cos(theta[k])*Tya;
 			  		if(dxp*dxp+dyp*dyp < (L+0.5)*(L+0.5)){ // overlap candidate
                                                 if(dxp*dxp/(a[k]+0.5)/(a[k]+0.5)+dyp*dyp/(b[k]+0.5)/(b[k]+0.5) < 1){ // disk inside fattened ellipse
                                                         condition = true; 
@@ -313,12 +321,20 @@ public class DPMnew implements Drawable {
                                 		b[k] = 2.15016*sizeRatio*Math.pow(l2[k],.5);
 					}
 
+					dxtrial = tolerance*2.*(Math.random()-0.5);
+					dytrial = tolerance*2.*(Math.random()-0.5);
+					xp[k] = PBC.position(xp[k]+dxtrial,Lx); 
+					yp[k] = PBC.position(yp[k]+dytrial,Ly);
+                        		dtheta = thetaTolerance*2.*(Math.random()-0.5);
+                        		theta[k] += dtheta;
                         		L = Math.max(a[k], b[k]);
 
 		        		for(int j=0; j<Nd; ++j){ // check for overlaps with disks
 						condition = false;
-                                        	double dxp = PBC.separation(x[j]-xp[k], Lx); // no rotations
-                                        	double dyp = PBC.separation(y[j]-yp[k], Ly);
+                                        	double Txa = PBC.separation(x[j]-xp[k], Lx);
+                                        	double Tya = PBC.separation(y[j]-yp[k], Ly);
+                                       		double dxp = Math.cos(theta[k])*Txa-Math.sin(theta[k])*Tya;
+                                       		double dyp = Math.sin(theta[k])*Txa+Math.cos(theta[k])*Tya;
 						if(dxp*dxp+dyp*dyp < (L+0.5)*(L+0.5)){ // overlap candidate
                                                		if(dxp*dxp/(a[k]+0.5)/(a[k]+0.5)+dyp*dyp/(b[k]+0.5)/(b[k]+0.5) < 1){ // overlap: disk inside fattened ellipse
                                                        		condition = true; 
@@ -351,6 +367,9 @@ public class DPMnew implements Drawable {
                                         		a[k] = 2.15016*sizeRatio*Math.pow(l1[k],.5);
                                         		b[k] = 2.15016*sizeRatio*Math.pow(l2[k],.5);
                                 		}
+						xp[k] = PBC.position(xp[k]-dxtrial, Lx); 
+		        			yp[k] = PBC.position(yp[k]-dytrial, Ly);
+                                		theta[k] -= dtheta;
 					}
 				}
 	    		}
@@ -391,4 +410,5 @@ public class DPMnew implements Drawable {
     		int ly = drawingPanel.yToPix(0)-drawingPanel.yToPix(Ly);
     		g.drawRect(xpix, ypix, lx, ly);
   	}
+
 }
