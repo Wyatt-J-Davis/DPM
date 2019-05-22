@@ -215,85 +215,37 @@ public class DPM implements Drawable {
   
 	//Determines whether overlap occurs between elliptical polymer and disk
   	public void Overcond(int d, int p){
-	  	// Step 1: Coordinate Transform
-	 	 realroots = true;
-		 condition = false; 
-	 	 double Txa = PBC.separation(x[d]-xp[p], Lx);
+	  	// Step 1: Coordinate transform
+		condition = false; 
+		 double Txa = PBC.separation(x[d]-xp[p], Lx);
 	 	 double Tya = PBC.separation(y[d]-yp[p], Ly); 
 	 	 double Tx = Math.cos(theta[p])*Txa-Math.sin(theta[p])*Tya;
 	 	 double Ty = Math.sin(theta[p])*Txa+Math.cos(theta[p])*Tya;
-	  	 // Step 2: Calcualte Coefficients of Polynomial
-	  	 double A = Tx*Tx/a[p]/a[p];
-	 	 double B = b[p]*b[p]*Ty*Ty/a[p]/a[p]/a[p]/a[p];
-	 	 double C = (b[p]*b[p]/a[p]/a[p]) - 1;
-	 	 // Step 3: Find Roots of Polynomial
+		// Step 2: Calculate coefficients of polynomial
+		double A = Tx*Tx/a[p]/a[p];
+		double B = b[p]*b[p]*Ty*Ty/a[p]/a[p]/a[p]/a[p];
+		double C = b[p]*b[p]/a[p]/a[p] - 1;
+		// Step 3: Find roots of polynomial
 	 	double coef[] = new double[5];
-	    coef[0] = A*C*C;
-	  	coef[1] = 2*A*C;
-	  	coef[2] = A+B-(C*C);
-	  	coef[3] = -2*C;
-	  	coef[4] = -1;
-	  
-	  	double roots[][] = Root.polynomial(coef);
-	  	double realroot1 = 0; 
-	  	double realroot2 = 0;
-	  	double realroot3 = 0;
-	  	double realroot4 = 0;
-	  
- 		// start of Alan's edits
- 		//this needs to be edited... 
-	 	 double realroot_ary[] = new double[4];
-         	 int nReal = 0;
-         	 for(int i = 0; i < 4; i++){
-	    	 	if(roots[1][i]*roots[1][i] < 1.e-40){ 
-                 		realroot_ary[nReal] = roots[0][i];
-               			nReal++;
-             	 	}
-          	 }
-          	 // Replace `realroots` with realroots 
-          	 if(nReal ==  2){
-             	realroot1 = realroot_ary[0];
-             	realroot2 = realroot_ary[1];
-	     		double xone = Tx/realroot1;
-	     		double xtwo = Tx/realroot2;
-	     		double yone = b[p]*b[p]*Ty*xone/a[p]/a[p]/(Tx+((b[p]*b[p]/a[p]/a[p])-1)*xone);
-	     		double ytwo = b[p]*b[p]*Ty*xtwo/a[p]/a[p]/(Tx+((b[p]*b[p]/a[p]/a[p])-1)*xtwo);
-	 		    if((xone-Tx)*(xone-Tx)+(yone-Ty)*(yone-Ty) < .25){
-					condition = true;
-	     		}
-	     		else if((xtwo-Tx)*(xtwo-Tx)+(ytwo-Ty)*(ytwo-Ty) < .25){
-					condition = true;
-	     		}
-          	 }                       
-          	 else if (nReal == 4){
-             	realroot1 = realroot_ary[0];
-             	realroot2 = realroot_ary[1];
-             	realroot3 = realroot_ary[2];
-             	realroot4 = realroot_ary[3];
-	     		double xone = Tx/realroot1;
-	     		double xtwo = Tx/realroot2;
-	     		double xthree = Tx/realroot3;
-	     	    double xfour = Tx/realroot4;
-	     		double yone = b[p]*b[p]*Ty*xone/a[p]/a[p]/(Tx+((b[p]*b[p]/a[p]/a[p])-1)*xone);
-	     		double ytwo = b[p]*b[p]*Ty*xtwo/a[p]/a[p]/(Tx+((b[p]*b[p]/a[p]/a[p])-1)*xtwo);
-	     		double ythree = b[p]*b[p]*Ty*xthree/a[p]/a[p]/(Tx+((b[p]*b[p]/a[p]/a[p])-1)*xthree);
-	     		double yfour = b[p]*b[p]*Ty*xthree/a[p]/a[p]/(Tx+((b[p]*b[p]/a[p]/a[p])-1)*xfour); 
-	 		if((xone-Tx)*(xone-Tx)+(yone-Ty)*(yone-Ty) < .25){
-				condition = true;
-	     		}
-	     		else if((xtwo-Tx)*(xtwo-Tx)+(ytwo-Ty)*(ytwo-Ty) < .25){
-				condition = true;
-	     		}
-	     		else if((xthree-Tx)*(xthree-Tx)+(ythree-Ty)*(ythree-Ty) < .25){
-				condition = true;
-	     		}
-	     		else if((xfour-Tx)*(xfour-Tx)+(yfour-Ty)*(yfour-Ty) < .25){
-				condition = true;
-	     		}
-          	} 
-          	else{
-          		realroots = false;
-          	 } 
+                coef[0] = -1.;
+                coef[1] = -2.*C;
+                coef[2] = A+B-C*C;
+                coef[3] = 2.*A*C;
+                coef[4] = A*C*C;
+	  	Polynomial polynomial = new Polynomial(coef);
+		double[] realroots;
+                realroots = polynomial.rootsReal();
+                int nRoots = realroots.length;
+                for(int i=0; i<nRoots; ++i){ // check each root for overlap
+			if(!condition){
+                        	double xroot = Tx*realroots[i];
+                        	double yroot = b[p]*b[p]*Ty*xroot/a[p]/a[p]/(Tx+(b[p]*b[p]/a[p]/a[p]-1)*xroot);
+                        	if((xroot-Tx)*(xroot-Tx)+(yroot-Ty)*(yroot-Ty) < 0.25){
+                                	condition = true;
+                        	}
+                        }
+                }
+              
 	}
     // Method developed to sum up the elements of the 2D `overtest` and `over` arrays 
 	public int arySum(int inpAry[][], int Np, int Nd){
@@ -317,7 +269,7 @@ public class DPM implements Drawable {
     		double L;
     		double dtheta; 
     		// Start iterating through disks to perform checks for disk-disk and disk-polymer overlaps
-    		/*
+    		
     		for(int i = 0;i<Nd;++i) {
       			overlap = false;
       			realroots = true; 
@@ -391,7 +343,7 @@ public class DPM implements Drawable {
 			}
 		}
 		}
-		*/
+		
 		
       		condition = false; 
       		// Start of polymer loop to check for polymer-disk overlap upon polymer move
@@ -489,8 +441,7 @@ public class DPM implements Drawable {
 					//end
 			}	  
 		}
-		// Start up here next time (4/17/19)
-		System.out.print(arySum(overtest, Np, Nd));
+		
 		if (realroots){
  			double rand = Math.random();
  			if(rand<prob*Math.exp((-penetrationCost*(arySum(overtest, Np, Nd)-arySum(over, Np, Nd)))) && realroots==true){
