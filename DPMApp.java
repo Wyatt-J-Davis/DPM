@@ -1,4 +1,5 @@
 package org.opensourcephysics.sip.DPM;
+
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.AffineTransform;
@@ -22,16 +23,9 @@ import java.util.Calendar;
  * 
  */ 
  
- // Yoyoyoy test 
-
- /** Version GOAL (met)
-  * 
-  * Limit number of steps and implement ordered eigenvalues.  
-  * 
-  */
 public class DPMApp extends AbstractSimulation {
 	  DPM hd = new DPM();
-  	DisplayFrame display = new DisplayFrame("x", "y", "Hard Disk Particles");
+  	DisplayFrame display = new DisplayFrame("x", "y", "Hard-Disk Polymer Mixture");
   	int i = 0; // Will track number of steps taken
   	int j = 0; // Will track number of data points written 
   	int k = 0; // Will track number of independant runs 

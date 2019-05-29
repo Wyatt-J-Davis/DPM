@@ -1,4 +1,5 @@
 package org.opensourcephysics.sip.DPM;
+
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.AffineTransform;
@@ -12,8 +13,7 @@ import java.util.Arrays;
  * HardDisksApp does a Monte Carlo simulation for a 2D system of hard disks 
  *
  *@author Alan Denton & Wyatt Davis based on MD code ch08/hd/HardDisksApp.java by Jan Tobochnik, Wolfgang Christian, Harvey Gould
- *@version 1.1 revised 04/10/17
- * Started as copy of Rotate_2 
+ * 
  */
  
  
@@ -214,6 +214,7 @@ public class DPM implements Drawable {
         }   
   
 	//Determines whether overlap occurs between elliptical polymer and disk
+  
  public void Overcond(int d, int p){ // disk (d) and polymer (p) indices
 	  	// Step 1: Coordinate transform
 		condition = false; 
@@ -245,21 +246,33 @@ public class DPM implements Drawable {
                         	}
                         }
                 }
-                //System.out.println(nRoots);
+
+              
+	}
+  // Method developed to sum up the elements of the 2D `overtest` and `over` arrays 
+	public int arySum(int inpAry[][], int Np, int Nd){
+		int sum = 0; 
+		for (int i = 0; i<Nd; i++){
+			for(int j = 0; j<Np; j++)
+				sum += inpAry[j][i];
+		}
+		return sum; 
+
 	}
 
  
 	//Conducts Monte-Carlo step of a system of hard-disks and soft elliptical ellipses    
 	public void step() {
 		// make trial displacements and check for overlap
-		// What the hell does "condition" mean? (This is why you comment code...)
-		// 
+		
 		realroots = true;
     		boolean overlap;
     		double dxtrial, dytrial;
     		double l1trial, l2trial;
     		double L;
     		double dtheta; 
+    		// Start iterating through disks to perform checks for disk-disk and disk-polymer overlaps
+    		
     		for(int i = 0;i<Nd;++i) {
       			overlap = false;
       			realroots = true; 
@@ -267,6 +280,7 @@ public class DPM implements Drawable {
       			dytrial = tolerance*2.*(Math.random()-0.5);
       			x[i] = PBC.position(x[i]+dxtrial, Lx); 
       			y[i] = PBC.position(y[i]+dytrial, Ly); 
+      			// Start of disk-disk overlap check
 			for(int j = 0;j<Nd;++j) {
         			if((j!=i)&&!overlap) {
           				double dx = PBC.separation(x[i]-x[j], Lx);
@@ -278,14 +292,17 @@ public class DPM implements Drawable {
           				}
         			}
       			}
+      			// End of disk-disk overlap check
       			condition = false;
       			realroots = true;
+      			// Start of disk-polymer overlap check
       			for(int k = 0; k<Np; k++){
-				if(overlap != true && realroots!=false){
-			 	L = a[k];
-			  	if(b[k]>=a[k]){
-					L = b[k];
-				}
+					if(overlap != true && realroots!=false){
+			 			L = a[k];
+			  			if(b[k]>=a[k]){
+							L = b[k];
+					}
+
 				if(over[k][i]==1){
 					Overcond(i,k);
 					if(realroots==true && condition==false){
@@ -315,19 +332,25 @@ public class DPM implements Drawable {
 			  	}
 		   	}
 		}
+		// Come up with function that sums up contents of 2D input array.
    		double rand = Math.random();
 	  	if(realroots){
-	  		if(rand<Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && realroots==true){
+	  		//if(rand<Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && realroots==true){
+	  		if(rand<Math.exp(-penetrationCost*(arySum(overtest, Np, Nd)-arySum(over, Np, Nd))) && realroots==true){
 				arrayCopy(overtest,over);
 			}
-			else if(rand>Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && realroots==true){
+			else if(rand>Math.exp(-penetrationCost*(arySum(overtest, Np, Nd)-arySum(over, Np, Nd))) && realroots==true){
 				arrayCopy(over,overtest);
 				x[i] = PBC.position(x[i]-dxtrial, Lx); // reject displacement 
 				y[i] = PBC.position(y[i]-dytrial, Ly);
 			}
 		}
 		}
+		
+		
       		condition = false; 
+      		// Start of polymer loop to check for polymer-disk overlap upon polymer move
+      		//Somthing is wrong between here...
       		for(int k = 0; k<Np; k++){
 			condition = false;
 			realroots = true;
@@ -379,11 +402,13 @@ public class DPM implements Drawable {
 				L = b[k];
 		      	 }
 		         for(int j = 0;j<Nd;++j){
+		         	// If overtest "returns" two or four real roots then the  
 				if(realroots==true){	   
 					double Txa = PBC.separation(x[j]-xp[k],Lx);
 					double Tya = PBC.separation(y[j]-yp[k],Ly);
 					double dxp = Math.cos(theta[k])*Txa-Math.sin(theta[k])*Tya;
 					double dyp = Math.sin(theta[k])*Txa+Math.cos(theta[k])*Tya;
+					// The following checks to see if disks already overlapping the polymer are exiting or staying in the polymer upon this trial move of the polymer and updates `overtest` accordingly 
 					if(over[k][j]==1){ 
 						Overcond(j,k);
 						if(!realroots){
@@ -398,6 +423,9 @@ public class DPM implements Drawable {
 							}
 				    		}
 					}
+					// End 
+
+					// The following checks for overlaps only if the disk falls within the radius of possible overlap of the polymer
 					if(dxp*dxp+dyp*dyp<(L+.5)*(L+.5)){
 						Overcond(j,k);
 						if(realroots==false){
@@ -413,15 +441,16 @@ public class DPM implements Drawable {
 							overtest[k][j]=1;
 						}
 					}
+					//end
 			}	  
 		}
-
+		
 		if (realroots){
  			double rand = Math.random();
- 			if(rand<prob*Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && realroots==true){
+ 			if(rand<prob*Math.exp((-penetrationCost*(arySum(overtest, Np, Nd)-arySum(over, Np, Nd)))) && realroots==true){
 				arrayCopy(overtest,over);
 			}
- 			else if(rand>prob*Math.exp(-penetrationCost*(IntStream.of(overtest[0]).sum()-IntStream.of(over[0]).sum())) && realroots==true){
+ 			else if(rand>prob*Math.exp((-penetrationCost*(arySum(overtest, Np, Nd)-arySum(over, Np, Nd)))) && realroots==true){
 				l1[k] -= l1trial;
 				l2[k] -= l2trial;
 				arrayCopy(over,overtest);
@@ -456,6 +485,8 @@ public class DPM implements Drawable {
 		} 
   
 	}
+	//and here. 
+	
 	}
 	
 	//Draw the polymer-nanoparticle mixture
