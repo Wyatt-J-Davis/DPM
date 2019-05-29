@@ -214,7 +214,8 @@ public class DPM implements Drawable {
         }   
   
 	//Determines whether overlap occurs between elliptical polymer and disk
-  	public void Overcond(int d, int p){
+  
+ public void Overcond(int d, int p){ // disk (d) and polymer (p) indices
 	  	// Step 1: Coordinate transform
 		condition = false; 
 		 double Txa = PBC.separation(x[d]-xp[p], Lx);
@@ -245,9 +246,10 @@ public class DPM implements Drawable {
                         	}
                         }
                 }
+
               
 	}
-    // Method developed to sum up the elements of the 2D `overtest` and `over` arrays 
+  // Method developed to sum up the elements of the 2D `overtest` and `over` arrays 
 	public int arySum(int inpAry[][], int Np, int Nd){
 		int sum = 0; 
 		for (int i = 0; i<Nd; i++){
@@ -255,6 +257,7 @@ public class DPM implements Drawable {
 				sum += inpAry[j][i];
 		}
 		return sum; 
+
 	}
 
  
